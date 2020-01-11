@@ -1,6 +1,7 @@
 import json
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, JavascriptException
 from time import sleep
+import random
 
 def getFollowers(browser):
     variables = {}
@@ -37,7 +38,7 @@ def getFollowers(browser):
     except NoSuchElementException:
         print("NO PRE element")
 
-    with open("meFollowed.txt", "w+") as file:
+    with open("data/meFollowed.txt", "w+") as file:
     	for follower in followed:
             file.write("%s\n" % str(follower))
 
@@ -81,7 +82,7 @@ def getFollowing(browser):
     except NoSuchElementException:
         print("NO PRE element")
 
-    with open("meFollowing.txt", "w+") as file:
+    with open("data/meFollowing.txt", "w+") as file:
     	for follower in following:
             file.write("%s\n" % str(follower))
 
@@ -96,10 +97,10 @@ def getNonfollowers():
 	usersImFollowing = []
 	usersFollowingMe = []
 
-	with open("meFollowing.txt", 'r') as following:
+	with open("data/meFollowing.txt", 'r') as following:
 		usersImFollowing = following.readlines()
 
-	with open("meFollowed.txt", 'r') as followed:
+	with open("data/meFollowed.txt", 'r') as followed:
 		usersFollowingMe = followed.readlines()
 
 	following.close()
@@ -111,7 +112,7 @@ def getNonfollowers():
 		else:
 			followers.append(user)
 
-	with open("nonFollowers.txt", "w+") as nonfollowfile:
+	with open("data/nonFollowers.txt", "w+") as nonfollowfile:
 		for item in nonFollowers:
 			nonfollowfile.write("%s" % str(item))
 
@@ -124,21 +125,63 @@ def unfollowUsers(browser):
 	baseUrl = "https://www.instagram.com/"
 	removeUserList = []
 
-	with open("remove.txt", "r")  as removeUsersFile:
+	browser.get((baseUrl + "arasssu/"))
+	currentFollowedCount = browser.execute_script("return document.getElementsByClassName('g47SY ')[2].textContent")
+	print("Current follow count: {}".format(currentFollowedCount))
+
+	with open("data/remove.txt", "r")  as removeUsersFile:
 		removeUserList = removeUsersFile.readlines()
 
 	removeUsersFile.close()
 
+	removeIndex = 1
+	removeCount = 0
 
 	for username in removeUserList:
+		if username is "":
+			continue
+		print("{}. removing user: {}".format(removeIndex, username))
 		userLink = (baseUrl + username)
 		browser.get(userLink)
-		sleep(2)
+		removeIndex += 1
+		sleep(random.randint(2,6))
 
 		try:
-			browser.execute_script("document.getElementsByClassName('_5f5mN    -fzfL     _6VtSN     yZn4P   ')[0].click()")
-			sleep(1.2)
+			try:
+				browser.execute_script("document.getElementsByClassName('_5f5mN    -fzfL     _6VtSN     yZn4P   ')[0].click()")
+			except JavascriptException as jsException:
+				print("error while unfollow click, try another button script")
+				try:
+					browser.execute_script("document.getElementsByClassName('BY3EC  sqdOP  L3NKy    _8A5w5    ')[0].click()")
+				except JavascriptException:
+					print("User already unfollowed, continue")
+					continue
+
+			sleep(random.randint(2,5))
 			browser.execute_script("document.getElementsByClassName('aOOlW -Cab_   ')[0].click()")
-			sleep(4)
+
+			# check if removing is going good
+			if removeIndex % 5 == 0:
+				browser.refresh()
+				sleep(3)
+				browser.refresh()
+				sleep(2)
+
+				element = browser.execute_script("return document.getElementsByClassName('_5f5mN    -fzfL     _6VtSN     yZn4P   ')[0]")
+
+				if element == None:
+					print("unsubscribed, continue")
+				else:
+					print("WARNING CANT UNSUBSCIRBE, ABORT!! removed: {}".format(removeCount))
+					return
+
+			removeCount += 1
+
+			sleepTime = max(5, random.gauss(30,15))
+			print("Sleeping for: {}".format(sleepTime))
+			sleep(sleepTime)
+
 		except NoSuchElementException as exception:
 			pass
+
+	print("Session ended, removed: {}".format(removeCount))
