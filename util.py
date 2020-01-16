@@ -2,6 +2,13 @@ import json
 from selenium.common.exceptions import NoSuchElementException, JavascriptException
 from time import sleep
 import random
+import csv
+import re
+
+excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
+"mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
+"mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar", "dobry", "dla"]
+
 
 def getFollowers(browser):
     variables = {}
@@ -185,3 +192,76 @@ def unfollowUsers(browser):
 			pass
 
 	print("Session ended, removed: {}".format(removeCount))
+
+
+def likePosts(browser, amount):
+	listUserNames = []
+	scrollHeight = 150
+	# TODO
+	# change for loop to while until amount is liked
+	# like first post
+	# catch when already liked
+
+	userName = ''
+	prevUserName = ''
+
+	# TODO add csv stats
+	# with open('likestats.csv', 'a+') as csv:
+	for i in range(amount):
+		
+
+		while userName == prevUserName:
+			browser.execute_script("window.scrollBy(0, {})".format(scrollHeight))
+			# userName = browser.execute_script("return document.getElementsByTagName('article')[4].getElementsByTagName('a')[0].getAttribute('href')")
+			article = browser.execute_script("return document.getElementsByTagName('article')[4]")
+			userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/h2/a').text
+
+			sleep(0.15)
+
+		print(userName)
+		prevUserName = userName
+
+		# postText = browser.execute_script("return document.getElementsByTagName('article')[3].getElementsByTagName('span')[9].textContent")
+		# postText = browser.find_element_by_xpath('//section/div[1]/div[1]/div/article[5]/div[2]/div[1]/div[1]/div/span/span[1]').text
+		# article = browser.execute_script("return document.getElementsByTagName('article')[4]")
+		postText = article.find_element_by_xpath('.//div[2]/div[1]/div/div/span/span[1]').text
+		print(postText)
+		
+		postValid = checkFollowedUserPost(postText)
+
+		print(("Is post valid? " +  str(postValid)))
+
+		if not postValid:
+			print("invalid, next post")
+			continue
+
+		if userName not in listUserNames:
+			try:
+				print('liking image...')
+				buttonLike = article.find_elements_by_tag_name('button')[0]
+				
+				# send keys is workaround for click() function not working
+				buttonLike.send_keys("\n")
+				
+				sleep(random.randint(100,300)/100.0)
+			except NoSuchElementException:
+				print("Post already liked, user: {}".format(userName))
+
+
+		listUserNames.append(userName)
+		browser.execute_script("window.scrollBy(0, {})".format(300))
+
+
+def checkFollowedUserPost(postText):
+	postValid = True
+	
+	listPostWords = postText.split(' ')
+
+	for postWord in listPostWords:
+		for badWord in excludes:
+			if postValid and re.search(badWord, postWord):
+				print("found bad word: {}".format(postWord))
+				postValid = False
+				return postValid
+
+	return postValid
