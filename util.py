@@ -7,7 +7,8 @@ import re
 
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
-"mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar", "dobry", "dla"]
+"mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar",
+"brzuszku", "brzuszek", "ciąża"]
 
 
 def getFollowers(browser):
@@ -204,16 +205,18 @@ def likePosts(browser, amount):
 
 	userName = ''
 	prevUserName = ''
+	postValid = None
 
 	# TODO add csv stats
 	# with open('likestats.csv', 'a+') as csv:
 	for i in range(amount):
-		
 
 		while userName == prevUserName:
 			browser.execute_script("window.scrollBy(0, {})".format(scrollHeight))
-			# userName = browser.execute_script("return document.getElementsByTagName('article')[4].getElementsByTagName('a')[0].getAttribute('href')")
+
+			# article = browser.execute_script("return document.getElementsByTagName('article')[4]")
 			article = browser.execute_script("return document.getElementsByTagName('article')[4]")
+			
 			userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/h2/a').text
 
 			sleep(0.15)
@@ -221,13 +224,13 @@ def likePosts(browser, amount):
 		print(userName)
 		prevUserName = userName
 
-		# postText = browser.execute_script("return document.getElementsByTagName('article')[3].getElementsByTagName('span')[9].textContent")
-		# postText = browser.find_element_by_xpath('//section/div[1]/div[1]/div/article[5]/div[2]/div[1]/div[1]/div/span/span[1]').text
-		# article = browser.execute_script("return document.getElementsByTagName('article')[4]")
-		postText = article.find_element_by_xpath('.//div[2]/div[1]/div/div/span/span[1]').text
-		print(postText)
-		
-		postValid = checkFollowedUserPost(postText)
+		try:
+			postText = article.find_element_by_xpath('.//div[2]/div[1]/div/div/span/span[1]').text
+		except NoSuchElementException:
+			postValid = True
+
+		if postValid == None:
+			postValid = checkFollowedUserPost(postText)
 
 		print(("Is post valid? " +  str(postValid)))
 
@@ -238,14 +241,18 @@ def likePosts(browser, amount):
 		if userName not in listUserNames:
 			try:
 				print('liking image...')
-				buttonLike = article.find_elements_by_tag_name('button')[0]
-				
-				# send keys is workaround for click() function not working
+				# buttonLike = article.find_elements_by_tag_name('button')[0]
+
+				buttonLike = article.find_elements_by_class_name('wpO6b')[0]
+
+				# send keys is workaround for click() function not working here for some reason
 				buttonLike.send_keys("\n")
 				
 				sleep(random.randint(100,300)/100.0)
 			except NoSuchElementException:
 				print("Post already liked, user: {}".format(userName))
+		else:
+			print('User  {}  already liked in this session'.format(userName))
 
 
 		listUserNames.append(userName)

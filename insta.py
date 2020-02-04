@@ -15,7 +15,7 @@ import re
 
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
-"mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar", "fajne"]
+"mum", "maluch", "420", "memes", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar", "fajne"]
 
 # TODO GENERAL
 # move all js scripts to constants file for easier updates
@@ -74,7 +74,7 @@ def likeHashtagPosts(amount, startOffset):
 
 def follow(num):
 	try: 
-		browser.execute_script("document.getElementsByClassName(\"KL4Bh\")[{}].click()".format(num))
+		browser.execute_script("document.getElementsByClassName('KL4Bh')[{}].click()".format(num))
 		sleep(r(1,100)/100.0 + r(2,4))
 		
 		
@@ -82,14 +82,20 @@ def follow(num):
 		postValid = checkPostData()
 
 		print("Post valid: {}".format(postValid))
+		username = browser.execute_script("return document.getElementsByClassName('FPmhX notranslate  nJAzx')[0].href")
+		print(('current follow: ' + username))
 
 		if postValid:
 			# try to follow, if user already followed go next post
 			try:
 				browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
+				sleep(r(1,3) + 1)
+				# like image
+				browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
 			except JavascriptException:
 				print("already following! like and close image")
 				browser.execute_script("document.getElementsByClassName('dCJp8 afkep')[0].click()")
+				
 				sleep(r(1,7) + 1)
 				browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
 				return
@@ -103,8 +109,7 @@ def follow(num):
 		sleep(r(1,100)/10.0 + 1)
 
 		# get username from post and save it in file
-		# TODO add timestamp
-		username = browser.execute_script("return document.getElementsByClassName('FPmhX notranslate  nJAzx')[0].href")
+		
 		with open("ifollow.txt", "a+") as users:
 			users.write("%s;%s\n" % (str(date.today()), str(username)))
 
@@ -112,6 +117,13 @@ def follow(num):
 
 		# close user window
 		browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")	
+		sleep(r(1,2) + 1)
+		try:
+			browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")	
+			print('HAD TO DOUBLE EXIT')
+		except JavascriptException:
+			pass
+
 		sleep(r(1,100)/100.0 + 1)
 
 		
@@ -153,7 +165,7 @@ chrome_options.add_argument('headless')
 chrome_driver = "C:/Users/aro/Documents/chromedriver/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
-likePosts(browser, 5)
+# likePosts(browser, 30)
 
 # likeHashtagPosts(43, 18)
 
@@ -163,11 +175,13 @@ likePosts(browser, 5)
 
 # browser.execute_script('document.getElementsByTagName('article')[1].getElementsByClassName('glyphsSpriteHeart__outline__24__grey_9 u-__7')[1].click()')
 
+# follow(9+9*3 + 0)
 
-# for i in range(25):
-# 	follow(21+i)
-# 	if i % 3 == 0:
-# 		browser.execute_script("window.scrollBy(0,200)")
+for i in range(25):
+	follow(9+9*3 + i)
+	print(('post num: ' + str(i)))
+	if i % 3 == 0:
+		browser.execute_script("window.scrollBy(0,350)")
 
 # getFollowers(browser)
 # getFollowing(browser)
