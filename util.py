@@ -142,6 +142,21 @@ def unfollowUsers(browser):
 
 	removeUsersFile.close()
 
+
+	lines = ['test']
+
+	while len(lines) > 0: 
+		with open("remove.txt", "r") as f:
+			lines = f.readlines()
+
+		with open("remove.txt", "w") as f:
+			for line in lines[1:]:
+				# if line.strip("\n") is not lines[0]:
+				f.write(line)
+
+		if len(lines) > 0:
+			print('removed:   {}'.format(lines[0]))
+
 	removeIndex = 1
 	removeCount = 0
 

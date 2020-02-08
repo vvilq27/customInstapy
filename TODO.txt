@@ -1,5 +1,6 @@
 unfollow after week, add to blacklist
 
+create external logger, add timestamp
 when following check if user is on blacklist
 run chrome in headless mode
 migrate app to rpi zero
@@ -7,6 +8,7 @@ like profile image only once per day
 name check, exclude "nails" n stuff
 log name when cant unfollow
 collect hashtags, make stats
+enter nonfollower acc like image
 
 
 == Less important ==

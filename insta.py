@@ -17,6 +17,8 @@ excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionb
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
 "mum", "maluch", "420", "memes", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar", "fajne"]
 
+exit_code = 'wpO6b '
+
 # TODO GENERAL
 # move all js scripts to constants file for easier updates
 # manual fix when stuck
@@ -72,69 +74,96 @@ def likeHashtagPosts(amount, startOffset):
 		# user deleted image, close empty window
 		browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
 
-def follow(num):
-	try: 
-		browser.execute_script("document.getElementsByClassName('KL4Bh')[{}].click()".format(num))
-		sleep(r(1,100)/100.0 + r(2,4))
-		
-		
-		# check post hashtags
-		postValid = checkPostData()
+def follow(amount):
+	follow_counter = 0
+	post = 0
 
-		print("Post valid: {}".format(postValid))
-		username = browser.execute_script("return document.getElementsByClassName('FPmhX notranslate  nJAzx')[0].href")
-		print(('current follow: ' + username))
+	while follow_counter < amount:
+		post += 1
+		try: 
+			browser.execute_script("document.getElementsByClassName('KL4Bh')[{}].click()".format(post + 9 + 3 * 9))
+			sleep(r(1,100)/100.0 + r(2,4))
 
-		if postValid:
-			# try to follow, if user already followed go next post
-			try:
-				browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
-				sleep(r(1,3) + 1)
-				# like image
-				browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
-			except JavascriptException:
-				print("already following! like and close image")
-				browser.execute_script("document.getElementsByClassName('dCJp8 afkep')[0].click()")
-				
-				sleep(r(1,7) + 1)
-				browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
-				return
-		else:
-			# post invalid, close user window
-			browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
-			print("Post is invalid: ")
-			sleep(r(1,100)/10.0 + 1)
-			return
+			buttons = browser.execute_script("return document.getElementsByClassName('{}')".format(exit_code))
+			print(len(buttons))
+			exit_button = buttons[-1]
+			print(type(exit_button))
+			
+			# check post hashtags
+			postValid = checkPostData()
 
-		sleep(r(1,100)/10.0 + 1)
+			username = browser.execute_script("return document.getElementsByClassName('FPmhX notranslate  nJAzx')[0].href")
 
-		# get username from post and save it in file
-		
-		with open("ifollow.txt", "a+") as users:
-			users.write("%s;%s\n" % (str(date.today()), str(username)))
+			print("{}. post valid: {} for user: {}".format(follow_counter, postValid, username))
 
-		users.close()
+			if postValid:
+				# try to follow, if user already followed go next post
+				try:
+					print('post valid, follow n like....')
+					browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
+					sleep(r(1,3) + 1)
+					# like image
+					browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+				except JavascriptException:
+					print("already following! like and close image")
+					browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+					
+					sleep(r(1,7) + 1)
+					# browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
+					
+					browser.execute_script("arguments[0].click()", exit_button)
+					
+					continue
 
-		# close user window
-		browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")	
-		sleep(r(1,2) + 1)
-		try:
-			browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")	
-			print('HAD TO DOUBLE EXIT')
-		except JavascriptException:
-			pass
+				follow_counter += 1
 
-		sleep(r(1,100)/100.0 + 1)
+				sleep(r(1,100)/10.0 + 1)
 
-		
+				# get username from post and save it in file
+				with open("ifollow.txt", "a+") as users:
+					users.write("%s;%s\n" % (str(date.today()), str(username)))
 
-	except NoSuchElementException as exception:
-		print(exception)
-		browser.refresh()
+				users.close()
 
-	except JavascriptException as exception:
-		# user deleted image, close empty window
-		browser.execute_script("document.getElementsByClassName(\"ckWGn\")[0].click()")
+				# close user window
+				sleep(r(1,2) + 1)
+				# browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(exit_code))
+				exit_button.click()
+				sleep(r(1,2) + 1)
+				try:
+					# browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(exit_code))
+					exit_button.click()
+					print('HAD TO DOUBLE EXIT')
+				except JavascriptException:
+					print("[insta.py - follow] cant close window")
+
+				sleep(r(1,100)/100.0 + 1)
+
+				# scroll page
+				if follow_counter % 3 == 0:
+					browser.execute_script("window.scrollBy(0,350)")
+
+			else:
+				# post invalid, close user window
+				try:
+					print('click exit....')
+					# browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(exit_code))
+					exit_button.click()
+				except:
+					print("cant close invalid post")
+				print("Post is invalid: ")
+				sleep(r(1,100)/10.0 + 1)
+
+				continue
+
+		except NoSuchElementException as exception:
+			print(exception)
+			browser.refresh()
+
+		except JavascriptException as exception:
+			# user deleted image, close empty window
+			# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+			exit_button.click()
 
 # TODO
 # return invalidity reason/hashtag
@@ -165,7 +194,7 @@ chrome_options.add_argument('headless')
 chrome_driver = "C:/Users/aro/Documents/chromedriver/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
-# likePosts(browser, 30)
+# likePosts(browser, 44)
 
 # likeHashtagPosts(43, 18)
 
@@ -175,17 +204,13 @@ browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # browser.execute_script('document.getElementsByTagName('article')[1].getElementsByClassName('glyphsSpriteHeart__outline__24__grey_9 u-__7')[1].click()')
 
-# follow(9+9*3 + 0)
 
-for i in range(25):
-	follow(9+9*3 + i)
-	print(('post num: ' + str(i)))
-	if i % 3 == 0:
-		browser.execute_script("window.scrollBy(0,350)")
+# follow(30)
+	
 
 # getFollowers(browser)
 # getFollowing(browser)
 
 # getNonfollowers()
 
-# unfollowUsers(browser)
+unfollowUsers(browser)
