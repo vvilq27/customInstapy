@@ -132,52 +132,52 @@ def getNonfollowers():
 def unfollowUsers(browser):
 	baseUrl = "https://www.instagram.com/"
 	removeUserList = []
+	removedUserList = []
+	unfollow_list_path = "data/remove.txt"
 
-	browser.get((baseUrl + "arasssu/"))
-	currentFollowedCount = browser.execute_script("return document.getElementsByClassName('g47SY ')[2].textContent")
-	print("Current follow count: {}".format(currentFollowedCount))
+	unfollow_button_class_name = '_5f5mN    -fzfL     _6VtSN     yZn4P   '
+	unfollow_button_class_name2 = 'BY3EC  sqdOP  L3NKy    _8A5w5    '
 
-	with open("data/remove.txt", "r")  as removeUsersFile:
-		removeUserList = removeUsersFile.readlines()
-
-	removeUsersFile.close()
-
-
-	lines = ['test']
-
-	while len(lines) > 0: 
-		with open("remove.txt", "r") as f:
-			lines = f.readlines()
-
-		with open("remove.txt", "w") as f:
-			for line in lines[1:]:
-				# if line.strip("\n") is not lines[0]:
-				f.write(line)
-
-		if len(lines) > 0:
-			print('removed:   {}'.format(lines[0]))
+	# browser.get((baseUrl + "arasssu/"))
+	# currentFollowedCount = browser.execute_script("return document.getElementsByClassName('g47SY ')[2].textContent")
+	# print("Current follow count: {}".format(currentFollowedCount))
 
 	removeIndex = 1
 	removeCount = 0
 
-	for username in removeUserList:
-		if username is "":
+
+	with open(unfollow_list_path, "r")  as removeUsersFile:
+		removeUserList = removeUsersFile.readlines()
+
+	removeUsersFile.close()
+
+	for userName in removeUserList:
+		print(userName)
+		
+		lastUser = True if removeUserList.index(userName) == len(removeUserList) - 1 else False
+
+		print(( str(removeUserList.index(userName)) + ' ' + str(len(removeUserList)) + ' ' + str(lastUser) ))
+
+		if userName is "":
+			print("username is blank")
 			continue
-		print("{}. removing user: {}".format(removeIndex, username))
-		userLink = (baseUrl + username)
+
+		print("{}. removing user: {}".format(removeIndex, userName))
+		userLink = (baseUrl + userName)
 		browser.get(userLink)
 		removeIndex += 1
+
 		sleep(random.randint(2,6))
 
 		try:
 			try:
-				browser.execute_script("document.getElementsByClassName('_5f5mN    -fzfL     _6VtSN     yZn4P   ')[0].click()")
+				browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(unfollow_button_class_name))
 			except JavascriptException as jsException:
 				print("error while unfollow click, try another button script")
 				try:
-					browser.execute_script("document.getElementsByClassName('BY3EC  sqdOP  L3NKy    _8A5w5    ')[0].click()")
+					browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(unfollow_button_class_name2))
 				except JavascriptException:
-					print("User already unfollowed, continue")
+					print("Can't click, user prob already unfollowed, continue")
 					continue
 
 			sleep(random.randint(2,5))
@@ -186,31 +186,45 @@ def unfollowUsers(browser):
 			# check if removing is going good
 			if removeIndex % 5 == 0:
 				browser.refresh()
-				sleep(3)
+				sleep(1)
 				browser.refresh()
-				sleep(2)
+				sleep(1)
 
 				element = browser.execute_script("return document.getElementsByClassName('_5f5mN    -fzfL     _6VtSN     yZn4P   ')[0]")
 
 				if element == None:
-					print("unsubscribed, continue")
+					print("unsubscring going cool, continue")
+
 				else:
 					print("WARNING CANT UNSUBSCIRBE, ABORT!! removed: {}".format(removeCount))
+					# TODO or maybe have a continueFlag that unlocks or blocks function blocks later
 					return
 
 			removeCount += 1
 
-			sleepTime = max(5, random.gauss(30,15))
-			print("Sleeping for: {}".format(sleepTime))
-			sleep(sleepTime)
+			# user removed, pop it from list
+			removedUserList.append(userName)
+
+			# write users remain to unfollow
+			with open(unfollow_list_path, "w") as removeUsersFile:
+				for user in list(set(removeUserList).difference(removedUserList)):
+					removeUsersFile.write(user)
+
+			removeUsersFile.close()
+
+			# if its last element then skip waiting
+			if lastUser:
+				sleepTime = max(5, random.gauss(20,15))
+				print("Sleeping for: {}".format(sleepTime))
+				sleep(sleepTime)
 
 		except NoSuchElementException as exception:
-			pass
+			print('NoSuchElementException')
 
-	print("Session ended, removed: {}".format(removeCount))
+	print("Session ended, removed: {}, could not remove {} users".format(len(removedUserList), len(removeUserList) - len(removedUserList)))
 
 
-def likePosts(browser, amount):
+def likePosts(browser, logger, amount):
 	listUserNames = []
 	scrollHeight = 150
 	# TODO
@@ -236,7 +250,7 @@ def likePosts(browser, amount):
 
 			sleep(0.15)
 
-		print(userName)
+		logger.info(userName)
 		prevUserName = userName
 
 		try:
@@ -271,6 +285,10 @@ def likePosts(browser, amount):
 
 
 		listUserNames.append(userName)
+
+		sleep(3)
+
+
 		browser.execute_script("window.scrollBy(0, {})".format(300))
 
 

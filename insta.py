@@ -7,6 +7,8 @@ from util import getNonfollowers
 from util import unfollowUsers
 from util import likePosts
 
+from logger_util import get_logger
+
 from random import randint as r
 from datetime import date
 from time import sleep
@@ -194,7 +196,8 @@ chrome_options.add_argument('headless')
 chrome_driver = "C:/Users/aro/Documents/chromedriver/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
-# likePosts(browser, 44)
+log = get_logger()
+likePosts(browser, log, 3)
 
 # likeHashtagPosts(43, 18)
 
@@ -213,4 +216,4 @@ browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # getNonfollowers()
 
-unfollowUsers(browser)
+# unfollowUsers(browser)
