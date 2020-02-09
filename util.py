@@ -4,6 +4,7 @@ from time import sleep
 import random
 import csv
 import re
+from datetime import date
 
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
@@ -285,6 +286,7 @@ def likePosts(browser, logger, amount):
 
 
 		listUserNames.append(userName)
+		likeCounter(userName)
 
 		sleep(3)
 
@@ -305,3 +307,47 @@ def checkFollowedUserPost(postText):
 				return postValid
 
 	return postValid
+
+
+def likeCounter(userLiked):
+	file_path = 'data/likes.csv'
+
+	write_lines = []
+	userName = userLiked
+	flagNewUser = True
+	currentDate = str(date.today())
+
+	with open(file_path, "r+") as csvFile:
+		lines = csvFile.readlines()
+
+	csvFile.close()
+
+	for l in lines:
+		record = ''
+
+		columns = l.split(';')
+		if columns[1] == userName:
+			flagNewUser = False
+
+			columns[0] = currentDate
+			columns[2] = str(int(columns[2]) + 1)
+
+			for column in columns:
+				record += column.strip() + ';'
+
+			record = record[:-1]
+			record += '\n'
+
+			write_lines.append(record)
+		else:
+			write_lines.append(l)
+
+	if flagNewUser:
+		record = (currentDate + ';' + userName + ';' + '1;\n')
+		write_lines.append(record)
+
+	with open(file_path, "w+") as csvFile:
+		for line in write_lines:
+			csvFile.write(line)
+
+	csvFile.close()
