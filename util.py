@@ -4,12 +4,12 @@ from time import sleep
 import random
 import csv
 import re
-from datetime import date
+from datetime import date, datetime
 
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
 "mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar",
-"brzuszku", "brzuszek", "ciąża"]
+"brzuszku", "brzuszek", "ciąża", "official"]
 
 
 def getFollowers(browser):
@@ -228,18 +228,15 @@ def unfollowUsers(browser):
 def likePosts(browser, logger, amount):
 	listUserNames = []
 	scrollHeight = 150
+	int_post_liked = 0
 	# TODO
 	# change for loop to while until amount is liked
-	# like first post
-	# catch when already liked
 
 	userName = ''
 	prevUserName = ''
 	postValid = None
 
-	# TODO add csv stats
-	# with open('likestats.csv', 'a+') as csv:
-	for i in range(amount):
+	while amount > int_post_liked:
 
 		while userName == prevUserName:
 			browser.execute_script("window.scrollBy(0, {})".format(scrollHeight))
@@ -251,7 +248,7 @@ def likePosts(browser, logger, amount):
 
 			sleep(0.15)
 
-		logger.info(userName)
+		logger.info('{}. {}'.format(int_post_liked, userName))
 		prevUserName = userName
 
 		try:
@@ -268,7 +265,10 @@ def likePosts(browser, logger, amount):
 			print("invalid, next post")
 			continue
 
-		if userName not in listUserNames:
+		flagLikePost = checkRecentLikeDate(userName)
+		print(flagLikePost)
+
+		if userName not in listUserNames and flagLikePost:
 			try:
 				print('liking image...')
 				# buttonLike = article.find_elements_by_tag_name('button')[0]
@@ -277,19 +277,20 @@ def likePosts(browser, logger, amount):
 
 				# send keys is workaround for click() function not working here for some reason
 				buttonLike.send_keys("\n")
+				int_post_liked +=  1
 				
 				sleep(random.randint(100,300)/100.0)
 			except NoSuchElementException:
 				print("Post already liked, user: {}".format(userName))
 		else:
 			print('User  {}  already liked in this session'.format(userName))
-
+			continue
 
 		listUserNames.append(userName)
+		
 		likeCounter(userName)
 
 		sleep(3)
-
 
 		browser.execute_script("window.scrollBy(0, {})".format(300))
 
@@ -304,7 +305,7 @@ def checkFollowedUserPost(postText):
 			if postValid and re.search(badWord, postWord):
 				print("found bad word: {}".format(postWord))
 				postValid = False
-				return postValid
+				break
 
 	return postValid
 
@@ -351,3 +352,38 @@ def likeCounter(userLiked):
 			csvFile.write(line)
 
 	csvFile.close()
+
+def checkRecentLikeDate(username):
+	flagLikePost = True
+	file_path = 'data/likes.csv'
+	userName = username
+	min_day_difference = 3
+	date_format = '%Y-%m-%d'
+	day_difference = None
+
+	with open(file_path, "r+") as csvFile:
+		likeRecords = csvFile.readlines()
+
+	csvFile.close()
+
+	for record in likeRecords:
+		columns = record.split(';')
+
+		if columns[1] == userName:
+			strLastLikeDate = columns[0]
+			datetimeLastLikeDate = datetime.strptime(strLastLikeDate, date_format)
+			today = date.today()
+			day_difference = (today - datetimeLastLikeDate.date()).days
+
+			print(('last like was: ' + str(day_difference)))	
+
+			break
+
+	if day_difference is not None and day_difference < min_day_difference:
+		flagLikePost = False
+		print("User was liked within last 3 days, next post")
+
+	return flagLikePost
+
+
+

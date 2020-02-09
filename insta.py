@@ -6,6 +6,7 @@ from util import getFollowing
 from util import getNonfollowers
 from util import unfollowUsers
 from util import likePosts
+import sys
 
 from logger_util import get_logger
 
@@ -197,7 +198,7 @@ chrome_driver = "C:/Users/aro/Documents/chromedriver/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 log = get_logger()
-likePosts(browser, log, 3)
+likePosts(browser, log, int(sys.argv[1]))
 
 # likeHashtagPosts(43, 18)
 
