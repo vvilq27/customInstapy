@@ -11,7 +11,8 @@ import re
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
 "mum", "maluch", "420", "memes", "mem", "memy", "clinic", "klinika", "polskichlopak", "brwi", "brows", "suchar",
-"brzuszku", "brzuszek", "ciąża", "official", "lash", "estetyczna", "mom", "dogsgram", "mother", "baby", "child", "przedłużanie"]
+"brzuszku", "brzuszek", "ciąża", "official", "lash", "estetyczna", "mom", "dogsgram", "mother", "baby", "child", "przedłużanie",
+"manga", "anime", "otaku", "scaryart", "horrorart"]
 
 invalid_names = ["polk", "polsk", "polish", "polan", "official", "makeup", "meme"]
 
@@ -20,6 +21,9 @@ max_like_count = 225
 
 like_code = 'wpO6b '
 user_name_code = 'sqdOP yWX7d     _8A5w5   ZIAjV '
+
+# TODO
+# extract methods like: pick post, like post, get username and codes
 
 
 def getFollowers(browser):
@@ -144,7 +148,10 @@ def unfollowUsers(browser, logger):
 	baseUrl = "https://www.instagram.com/"
 	removeUserList = []
 	removedUserList = []
+	untochableList = []
+
 	unfollow_list_path = "data/remove.txt"
+	untouchable_list_path = "data/untachable.txt"
 
 	unfollow_button_class_name = '_5f5mN    -fzfL     _6VtSN     yZn4P   '
 	unfollow_button_class_name2 = 'BY3EC  sqdOP  L3NKy    _8A5w5    '
@@ -154,13 +161,25 @@ def unfollowUsers(browser, logger):
 	removeIndex = 1
 	removeCount = 0
 
+	with open(untouchable_list_path, "r")  as untouchableUsersFile:
+		untochableList = untouchableUsersFile.readlines()
 
+	untouchableUsersFile.close()
+	
 	with open(unfollow_list_path, "r")  as removeUsersFile:
 		removeUserList = removeUsersFile.readlines()
 
 	removeUsersFile.close()
 
+	logger.info("Removing %d users" % len(removeUserList))
+
 	for userName in removeUserList:	
+		print(userName)
+
+		if userName in untochableList:
+			print("[INFO] unfollow() | found untouchable user: %s " % userName)
+			continue
+
 		if userName is "":
 			print("username is blank")
 			continue
@@ -181,7 +200,7 @@ def unfollowUsers(browser, logger):
 				except JavascriptException:
 					print("Can't click, user prob already unfollowed, continue")
 					continue
-
+			# click unfollow popup
 			browser.execute_script("document.getElementsByClassName('aOOlW -Cab_   ')[0].click()")
 
 			# check if removing is going good
@@ -223,6 +242,7 @@ def unfollowUsers(browser, logger):
 
 
 def likePosts(browser, logger, amount):
+	logger.info("Starting like posts: %d" % amount)
 	scrollHeight = 100
 	int_post_liked = 0
 	scrollTime = 0.4
@@ -281,10 +301,10 @@ def likePosts(browser, logger, amount):
 				print("Post already liked, user: {}".format(userName))
 		else:
 			if not flagRecentlyLikedPost:
-				print("User was liked within last 3 days, next post")
+				print("(%s)User was liked within last 3 days, next post" % userName)
 
 			elif not flagPostLikeCount:
-				print('Post has too many likes ({}) or cant get likes count'.format(likeCount))
+				print('[INFO] likePosts() | ({}) Post has too many likes ({}) or cant get likes count'.format(userName, likeCount))
 
 			continue
 		
@@ -375,7 +395,7 @@ def checkRecentLikeDate(username):
 			today = date.today()
 			day_difference = (today - datetimeLastLikeDate.date()).days
 
-			print(('checkRecentLikeDate() | last like was: ' + str(day_difference)))	
+			# print(('checkRecentLikeDate() | last like was: ' + str(day_difference)))	
 
 			break
 
@@ -385,16 +405,12 @@ def checkRecentLikeDate(username):
 	return flagLikePost
 
 
-
+# return false if something wrong so no likes
 def checkPostLikeCount(article, userName):
 	result = False
 	like_count = 0
 
 	try:
-		# if len(article.find_elements_by_class_name('sqdOP')) == 1:
-		# 	print('[INFO] checkPostLikeCount() | post is a video or a hashtag, next')
-		# 	return False, 0
-
 		like_count = article.find_elements_by_class_name('sqdOP')[1]
 		
 		# pares like txt for case when sbdy liked post
@@ -409,7 +425,7 @@ def checkPostLikeCount(article, userName):
 
 			like_count = str_like_count[:cut_index]
 
-			print("checkPostLikeCount() | {}".format(like_count))
+			print("[DEBUG] checkPostLikeCount() | ({}) {}".format(userName, like_count))
 		else:
 			like_count = like_count.text
 		result = True
@@ -419,20 +435,35 @@ def checkPostLikeCount(article, userName):
 			# like_count = article.find_elements_by_class_name('sqdOP')[9].find_elements_by_tag
 			result = True
 		except:
-			print("[INFO] checkPostLikeCount() | cant get likes from xpath")
+			print("[ERROR] checkPostLikeCount() | cant get likes from xpath")
 			result = False
 	
 
 	if result == True:
+
 		try:
-			like_count = str(like_count).replace(' ', '').split(':')[1]
+			tmp = like_count
 			like_count = int(like_count)
-			
+
 			if like_count < min_like_count or like_count > max_like_count:
 				result = False
 		except:
-			result = False
-			print("[INFO] ({}) something wrong with xpath: '{}'".format(userName, like_count))
+			# print("[DEBUG] checkPostLikeCount() | like count format error for string: %s" % tmp)
+
+			try:
+				like_count = str(like_count).replace(' ', '').split(':')[1]
+				like_count = int(like_count)
+				
+				if like_count < min_like_count or like_count > max_like_count:
+					result = False
+			except:
+				print("[ERROR] checkPostLikeCount() | post is a video, leave it")
+				result = False
+
+		# except Exception as e:
+		# 	result = False
+		# 	print("[ERROR] checkPostLikeCount() |({}) something wrong with xpath: '{}'".format(userName, like_count))
+		# 	print("[ERROR] checkPostLikeCount() | %s" %e)
 	else:
 		print("[Error] cant get like count")
 
@@ -440,6 +471,7 @@ def checkPostLikeCount(article, userName):
 
 
 def follow(browser, logger, amount):
+	logger.info("Starting follow users: %d" % amount)
 	SLEEP_TIME = 30
 	SCROLL_HEIGHT = 370
 	follow_counter = 0
@@ -460,12 +492,13 @@ def follow(browser, logger, amount):
 
 		try: 
 			article = browser.execute_script("return document.getElementsByClassName('{}')[{}].click()".format(post_code, (post % 3) + 35))
+			sleep(0.5)
 
 			try:
-				userName = browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(username_code))
-			except JavascriptException:
-				print("chuja a nie username")
-				
+				userName = browser.execute_script("return document.getElementsByClassName('{}')[1].text".format(username_code))
+			except JavascriptException as e:
+				print("chuja a nie username \n%s" % e)
+
 			userNameValid = validUsername(userName)
 
 			sleep(r(1,100)/100.0 + r(1,2))
@@ -479,10 +512,17 @@ def follow(browser, logger, amount):
 					browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
 					sleep(r(1,3) + 1)
 					# like image
-					browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+					if checkRecentLikeDate(userName):
+						browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+
+						likeCounter(userName)
+
 				except JavascriptException:
 					print("already following! like and close image")
-					browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+					if checkRecentLikeDate(userName):
+						browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+
+						likeCounter(userName)
 					
 					sleep(r(1,7) + 1)
 					exitPost(browser)

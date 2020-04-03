@@ -42,31 +42,36 @@ browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # browser.get("https://www.instagram.com/")
 
-# close popup
-# prob need to send keys "enter" to get that
-# browser.find_elements_by_class_name('aOOlW   HoLwm ')[0].click()
-# browser.find_element_by_xpath('//div[4]/div/div/div[3]/button[2]').click()
-
 log = get_logger()
 
 # browser.execute_script("window.scrollBy(0, {})".format(1000))
+if sys.argv[1] == "like":
+	likePosts(browser, log, int(sys.argv[2]))
 
-# likePosts(browser, log, int(sys.argv[1]))
+if sys.argv[1] == "followers":
+	getFollowers(browser)
+	getFollowing(browser)
+
+	getNonfollowers()
+
+if sys.argv[1] == "unfollow":
+	unfollowUsers(browser, log)
+
+
 # likeHashtagPosts(browser, log, 45, 35)
+
+# follow(browser, log, int(sys.argv[1]))
+
+
+
+
+
+
+# 		OUT OF ORDER
+
+
 
 # like = browser.find_elements_by_class_name(like_code)[0]
 # print(like.getTagName())
 # like.click()
-
-# likeHashtagPosts(43, 18)
 # browser.find_elements_by_class_name(like_code)[0].click()
-
-follow(browser, log, 5)
-
-
-# getFollowers(browser)
-# getFollowing(browser)
-
-# getNonfollowers()
-
-# unfollowUsers(browser, log)
