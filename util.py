@@ -483,16 +483,23 @@ def follow(browser, logger, amount):
 	buttons = None
 	userName = None
 
+
+	browser.execute_script('document.elementFromPoint(230, 450).click()')
+
+# scroll top posts, disregard bitchez ;)
+	for i in range(9):
+		clickNextPost(browser)
+
 	while follow_counter < amount:
 		# scroll page
-		if post % 3 == 0:
-			scroll(browser, SCROLL_HEIGHT)
+		# if post % 3 == 0:
+		# 	scroll(browser, SCROLL_HEIGHT)
 
 		post += 1
 
 		try: 
-			article = browser.execute_script("return document.getElementsByClassName('{}')[{}].click()".format(post_code, (post % 3) + 35))
-			sleep(0.5)
+			# article = browser.execute_script("return document.getElementsByClassName('{}')[{}].click()".format(post_code, (post % 3) + 35))
+			# sleep(0.5)
 
 			try:
 				userName = browser.execute_script("return document.getElementsByClassName('{}')[1].text".format(username_code))
@@ -500,13 +507,13 @@ def follow(browser, logger, amount):
 				print("chuja a nie username \n%s" % e)
 
 			userNameValid = validUsername(userName)
-
-			sleep(r(1,100)/100.0 + r(1,2))
 			
 			# check post likeHashtagPosts
 			postValid = checkPostData(browser, False)
 			
 			if postValid and userNameValid:
+				sleep(r(1,100)/100.0 + r(1,2))
+
 				# try to follow, if user already followed go next post
 				try:
 					browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
@@ -525,13 +532,13 @@ def follow(browser, logger, amount):
 						likeCounter(userName)
 					
 					sleep(r(1,7) + 1)
-					exitPost(browser)
-					
+					# exitPost(browser)
+
+					clickNextPost(browser)
 					continue
 
 				logger.info("{}. followed user: {}".format(follow_counter, userName))
 				follow_counter += 1
-				sleep(r(30,50))
 
 				# get username from post and save it in file
 				with open("ifollow.txt", "a+") as users:
@@ -539,33 +546,37 @@ def follow(browser, logger, amount):
 
 				users.close()
 
-				# close user window
-				sleep(r(1,2) + 1)
-				
-				exitPost(browser)
-				# sleep(r(1,2) + 1)
-				sleep(1)
+				sleep(r(30,50))
 
+				# close user window
+				# sleep(r(1,2) + 1)
+				
+				# exitPost(browser)
+				# sleep(r(1,2) + 1)
+
+				clickNextPost(browser)
 
 			else:
-				# post invalid, close user window
+				# post invalid, go next
 				print("post invalid for user: {}, username valid? {}".format(userName, userNameValid))
 					
-				exitPost(browser)
+				# exitPost(browser)
+				clickNextPost(browser)
 
 				sleep(r(1,100)/10.0 + 1)
 
 				continue
 
 		except NoSuchElementException as exception:
-			print("[ERROR] NoSuchElementException: \r\n{}".format(exception))
-			browser.refresh()
+			# print("[ERROR] NoSuchElementException: \r\n{}".format(exception))
+			# browser.refresh()
+			clickNextPost(browser)
 
 		except JavascriptException as exception:
 			# user deleted image, close empty window
 			print("[ERROR] JS exception: \r\n{}".format(exception) )
 			sleep(1.5)
-			exitPost(browser)
+			clickNextPost(browser)
 
 		sleep(3)
 
@@ -599,20 +610,24 @@ def checkPostData(browser, flagPrint = True):
 
 
 def likeHashtagPosts(browser, log, like_amount, startOffset):
-	SCROLL_HEIGHT = 400
+	SCROLL_HEIGHT = 800
 	like_code = 'wpO6b '
 	username_code = 'sqdOP '
 	post_counter = 0
 	like_counter = 1
 
 	try: 
-		while like_counter < like_amount:
-			if post_counter % 3 == 0:
-				scroll(browser, SCROLL_HEIGHT)
-				print('>>>>>>>>>>>\t\tscrolll timeeeeeee: {}'.format(post_counter))
-				post_counter = 0
+		browser.execute_script('document.elementFromPoint(230, 450).click()')
 
-			browser.execute_script("document.getElementsByClassName(\"KL4Bh\")[{}].click()".format(post_counter + startOffset+1 ))
+# scroll top posts, disregard bitchez ;)
+		for i in range(9):
+			clickNextPost(browser)
+
+			sleep(0.5)
+
+		while like_counter < like_amount:
+			clickNextPost(browser)
+
 			sleep(r(1,100)/100.0 + r(2,4))
 			post_counter += 1
 			
@@ -630,21 +645,14 @@ def likeHashtagPosts(browser, log, like_amount, startOffset):
 			# get username from post and save it in file
 			# TODO add timestamp
 			username = browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(username_code))
+			like_counter += 1
 			print("{}. Post valid: {} for user: {}".format(like_counter, postValid, username))
 			
 			with open("likedImage.txt", "a+") as users:
 				users.write("%s;%s\n" % (str(date.today()), str(username)))
 
 			users.close()
-
-			print('>>>>>>>>> \t\t counter check: {}'.format(post_counter))
-			like_counter += 1
-
-
-			# close user window
-			exitPost(browser)
 			sleep(r(4,10))
-
 
 	except NoSuchElementException as exception:
 		print(exception)
@@ -659,6 +667,9 @@ def likeHashtagPosts(browser, log, like_amount, startOffset):
 
 def exitPost(browser):
 	browser.execute_script('document.elementFromPoint(10, 10).click()')
+
+def clickNextPost(browser):
+	browser.execute_script('document.elementFromPoint(1050, 460).click()')
 
 def scroll(browser, height = 350):
 	browser.execute_script("window.scrollBy(0,%s)" % height)

@@ -37,7 +37,7 @@ chrome_options = Options()
 chrome_options.add_experimental_option("debuggerAddress", "localhost:9014")
 chrome_options.add_argument('headless')
 #Change chrome driver path accordingly
-chrome_driver = "C:/Users/aro/Documents/chromedriver/chromedriver.exe"
+chrome_driver = "C:/Users/aro/Documents/chromedriver2/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # browser.get("https://www.instagram.com/")
@@ -57,12 +57,17 @@ if sys.argv[1] == "followers":
 if sys.argv[1] == "unfollow":
 	unfollowUsers(browser, log)
 
+if sys.argv[1] == "likeHashtag":
+	likeHashtagPosts(browser, log, 45, int(sys.argv[2]))
 
-# likeHashtagPosts(browser, log, 45, 35)
+if sys.argv[1] == "follow":
+	follow(browser, log, int(sys.argv[2]))
 
-# follow(browser, log, int(sys.argv[1]))
 
-
+# cursor cords debug
+# var x,y; document.onmousemove=(e)=>{x=e.pageX;y=e.pageY;}
+# then create live expression in console (eye icon below tabs)
+# paste this: "("+x+","+y+")"
 
 
 
