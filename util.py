@@ -7,6 +7,7 @@ import re
 from datetime import date, datetime
 from random import randint as r
 import re
+from random import randrange
 
 excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionblogger", 
 "mama", "nails", "studio", "kosmetyki", "krem", "fryzjer", "wellhair", "moda", "paznokcie", "salon", "sklep", 
@@ -14,7 +15,8 @@ excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionb
 "brzuszku", "brzuszek", "ciąża", "official", "lash", "estetyczna", "mom", "dogsgram", "mother", "baby", "child", "przedłużanie",
 "manga", "anime", "otaku", "scaryart", "horrorart"]
 
-invalid_names = ["polk", "polsk", "polish", "polan", "official", "makeup", "meme"]
+invalid_names = ["polk", "polsk", "polish", "polan", "official", "makeup", "meme", "zdrowie", "uroda", "styl", "butik", "caffe", "salon", "mama", "page",
+"fanpage", "photograph", "photo"]
 
 min_like_count = 20
 max_like_count = 225
@@ -243,7 +245,7 @@ def unfollowUsers(browser, logger):
 
 def likePosts(browser, logger, amount):
 	logger.info("Starting like posts: %d" % amount)
-	scrollHeight = 100
+	scrollHeight = 220
 	int_post_liked = 0
 	scrollTime = 0.4
 	
@@ -261,7 +263,7 @@ def likePosts(browser, logger, amount):
 
 			try:
 				# userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/h2/a').text
-				userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/a').text
+				userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/div/a').text
 			except NoSuchElementException:
 				# the post is a hastag
 				userName = article.find_element_by_xpath('.//header/div[2]/div[2]/div[1]/a').text
@@ -609,24 +611,27 @@ def checkPostData(browser, flagPrint = True):
 	return postValid
 
 
-def likeHashtagPosts(browser, log, like_amount, startOffset):
+def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 	SCROLL_HEIGHT = 800
 	like_code = 'wpO6b '
 	username_code = 'sqdOP '
 	post_counter = 0
 	like_counter = 1
 
+	print('Continue liking? :' + str(continueLiking))
+
 	try: 
-		browser.execute_script('document.elementFromPoint(230, 450).click()')
+		if continueLiking is False:
+			browser.execute_script('document.elementFromPoint(230, 450).click()')
 
-# scroll top posts, disregard bitchez ;)
-		for i in range(9):
-			clickNextPost(browser)
+	# scroll top posts, disregard bitchez ;)
+			for i in range(9):
+				clickNextPost(browser)
 
-			sleep(0.5)
+				sleep(0.5)
 
 		while like_counter < like_amount:
-			clickNextPost(browser)
+			clickNextPostRandomize(browser, 4)
 
 			sleep(r(1,100)/100.0 + r(2,4))
 			post_counter += 1
@@ -644,6 +649,7 @@ def likeHashtagPosts(browser, log, like_amount, startOffset):
 
 			# get username from post and save it in file
 			# TODO add timestamp
+			# 	check username with checkRecentLikeDate() and change file where you save user
 			username = browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(username_code))
 			like_counter += 1
 			print("{}. Post valid: {} for user: {}".format(like_counter, postValid, username))
@@ -668,8 +674,14 @@ def likeHashtagPosts(browser, log, like_amount, startOffset):
 def exitPost(browser):
 	browser.execute_script('document.elementFromPoint(10, 10).click()')
 
+def clickNextPostRandomize(browser, repetitions):
+	for i in range(0, randrange(repetitions)+1):
+		browser.execute_script('document.elementFromPoint(1050, 460).click()')
+		sleep(0.75)
+
+
 def clickNextPost(browser):
-	browser.execute_script('document.elementFromPoint(1050, 460).click()')
+		browser.execute_script('document.elementFromPoint(1050, 460).click()')
 
 def scroll(browser, height = 350):
 	browser.execute_script("window.scrollBy(0,%s)" % height)

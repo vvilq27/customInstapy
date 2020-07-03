@@ -45,23 +45,40 @@ browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 log = get_logger()
 
 # browser.execute_script("window.scrollBy(0, {})".format(1000))
+
+# TODO 
+# put all method name strings in array and display it in else
 if sys.argv[1] == "like":
 	likePosts(browser, log, int(sys.argv[2]))
 
-if sys.argv[1] == "followers":
+elif sys.argv[1] == "followers":
 	getFollowers(browser)
 	getFollowing(browser)
 
 	getNonfollowers()
 
-if sys.argv[1] == "unfollow":
+elif sys.argv[1] == "unfollow":
 	unfollowUsers(browser, log)
 
-if sys.argv[1] == "likeHashtag":
-	likeHashtagPosts(browser, log, 45, int(sys.argv[2]))
+elif sys.argv[1] == "likeH":
 
-if sys.argv[1] == "follow":
+	try:
+		continueLiking = True if sys.argv[3] == 'continue' else False
+		
+		likeHashtagPosts(browser, log, int(sys.argv[2]), continueLiking)
+	except:
+		likeHashtagPosts(browser, log, int(sys.argv[2]))
+
+	
+
+elif sys.argv[1] == "follow":
 	follow(browser, log, int(sys.argv[2]))
+
+elif sys.argv[1] == "likeAfterFollow":
+	likeHashtagPosts(browser, log, 45, int(sys.argv[2]), True)
+
+else:
+	print('wrong method name, try agane')
 
 
 # cursor cords debug
