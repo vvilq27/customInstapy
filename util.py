@@ -19,9 +19,12 @@ invalid_names = ["polk", "polsk", "polish", "polan", "official", "makeup", "meme
 "fanpage", "photograph", "photo"]
 
 min_like_count = 20
-max_like_count = 225
+MAX_LIKE_COUNT = 355
 
-like_code = 'wpO6b '
+LIKE_CODE = 'wpO6b '
+LIKE_BUTTON_INDEX = 1
+USERNAME_PATH = './/header/div[2]/div[1]/div/span/a'
+HASHTAG_PATH = './/header/div[2]/div[1]/a'
 user_name_code = 'sqdOP yWX7d     _8A5w5   ZIAjV '
 
 # TODO
@@ -257,7 +260,7 @@ def likePosts(browser, logger, amount):
 	while amount > int_post_liked:
 
 		while userName == prevUserName:
-			browser.execute_script("window.scrollBy(0, {})".format(scrollHeight))
+			scroll(browser, scrollHeight)
 
 			article = browser.execute_script("return document.getElementsByTagName('article')[4]")
 
@@ -266,7 +269,18 @@ def likePosts(browser, logger, amount):
 				userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/div/a').text
 			except NoSuchElementException:
 				# the post is a hastag
-				userName = article.find_element_by_xpath('.//header/div[2]/div[2]/div[1]/a').text
+				try:
+					userName = article.find_element_by_xpath(USERNAME_PATH).text
+				except NoSuchElementException:
+					try:
+						hashtag = article.find_element_by_xpath(HASHTAG_PATH).text
+						logger.info("Found hashtag #{}, continue ==>".format(hashtag))
+						scroll(browser, 700)
+						continue
+					except:
+						logger.info("Failed to get username, continue ==>")
+						continue
+
 
 			sleep(scrollTime)
 
@@ -290,7 +304,7 @@ def likePosts(browser, logger, amount):
 
 		if  flagRecentlyLikedPost and flagPostLikeCount:
 			try:
-				buttonLike = article.find_elements_by_class_name(like_code)[0]
+				buttonLike = article.find_elements_by_class_name(LIKE_CODE)[LIKE_BUTTON_INDEX]
 
 				# send keys is workaround for click() function not working here for some reason
 				buttonLike.send_keys("\n")
@@ -433,6 +447,7 @@ def checkPostLikeCount(article, userName):
 		result = True
 	except NoSuchElementException:
 		try:
+			print("hello")
 			like_count = article.find_element_by_xpath('//div[2]/section[2]/div/div/button/span').text
 			# like_count = article.find_elements_by_class_name('sqdOP')[9].find_elements_by_tag
 			result = True
@@ -447,7 +462,7 @@ def checkPostLikeCount(article, userName):
 			tmp = like_count
 			like_count = int(like_count)
 
-			if like_count < min_like_count or like_count > max_like_count:
+			if like_count < min_like_count or like_count > MAX_LIKE_COUNT:
 				result = False
 		except:
 			# print("[DEBUG] checkPostLikeCount() | like count format error for string: %s" % tmp)
@@ -456,7 +471,7 @@ def checkPostLikeCount(article, userName):
 				like_count = str(like_count).replace(' ', '').split(':')[1]
 				like_count = int(like_count)
 				
-				if like_count < min_like_count or like_count > max_like_count:
+				if like_count < min_like_count or like_count > MAX_LIKE_COUNT:
 					result = False
 			except:
 				print("[ERROR] checkPostLikeCount() | post is a video, leave it")
@@ -613,7 +628,6 @@ def checkPostData(browser, flagPrint = True):
 
 def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 	SCROLL_HEIGHT = 800
-	like_code = 'wpO6b '
 	username_code = 'sqdOP '
 	post_counter = 0
 	like_counter = 1
@@ -637,14 +651,15 @@ def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 			post_counter += 1
 			
 			# check post hashtags
-			postValid = checkPostData(browser)
+			# postValid = checkPostData(browser)
+			postValid = True
 
-			if not postValid:
-				sleep(r(1,100)/10.0 + 1)
+			# if not postValid:
+			# 	sleep(r(1,100)/10.0 + 1)
 
-				continue
+			# 	continue
 
-			browser.execute_script("document.getElementsByClassName('{}')[0].click()".format(like_code))
+			browser.execute_script("document.getElementsByClassName('{}')[{}].click()".format(LIKE_CODE, LIKE_BUTTON_INDEX))
 			sleep(r(1,7) + 1)
 
 			# get username from post and save it in file
@@ -684,7 +699,7 @@ def clickNextPost(browser):
 		browser.execute_script('document.elementFromPoint(1050, 460).click()')
 
 def scroll(browser, height = 350):
-	browser.execute_script("window.scrollBy(0,%s)" % height)
+	browser.execute_script("window.scrollBy(0,%s)" % str(height))
 
 def validUsername(username):
 
