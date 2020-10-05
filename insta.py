@@ -37,7 +37,7 @@ chrome_options = Options()
 chrome_options.add_experimental_option("debuggerAddress", "localhost:9014")
 chrome_options.add_argument('headless')
 #Change chrome driver path accordingly
-chrome_driver = "C:/Users/aro/Documents/chromedriver2/chromedriver.exe"
+chrome_driver = "C:/Users/aro/Documents/chromedriver85/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # browser.get("https://www.instagram.com/")

@@ -25,7 +25,8 @@ LIKE_CODE = 'wpO6b '
 LIKE_BUTTON_INDEX = 1
 USERNAME_PATH = './/header/div[2]/div[1]/div/span/a'
 HASHTAG_PATH = './/header/div[2]/div[1]/a'
-user_name_code = 'sqdOP yWX7d     _8A5w5   ZIAjV '
+FOLLOWUSER_CODE = 'sqdOP yWX7d    y3zKF     '
+USERNAME_CODE = 'sqdOP yWX7d     _8A5w5   ZIAjV '
 
 # TODO
 # extract methods like: pick post, like post, get username and codes
@@ -491,11 +492,11 @@ def follow(browser, logger, amount):
 	logger.info("Starting follow users: %d" % amount)
 	SLEEP_TIME = 30
 	SCROLL_HEIGHT = 370
+	SKIPPED_POSTS = 13
 	follow_counter = 0
 	post = 0
 
 	post_code = 'eLAPa'
-	username_code = 'sqdOP '
 
 	buttons = None
 	userName = None
@@ -504,7 +505,7 @@ def follow(browser, logger, amount):
 	browser.execute_script('document.elementFromPoint(230, 450).click()')
 
 # scroll top posts, disregard bitchez ;)
-	for i in range(9):
+	for i in range(SKIPPED_POSTS):
 		clickNextPost(browser)
 
 	while follow_counter < amount:
@@ -519,7 +520,7 @@ def follow(browser, logger, amount):
 			# sleep(0.5)
 
 			try:
-				userName = browser.execute_script("return document.getElementsByClassName('{}')[1].text".format(username_code))
+				userName = findUsername(browser)
 			except JavascriptException as e:
 				print("chuja a nie username \n%s" % e)
 
@@ -533,18 +534,22 @@ def follow(browser, logger, amount):
 
 				# try to follow, if user already followed go next post
 				try:
-					browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
+					followUser(browser)
+					# browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
 					sleep(r(1,3) + 1)
 					# like image
 					if checkRecentLikeDate(userName):
-						browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+						# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+						likePost(browser)
 
 						likeCounter(userName)
 
 				except JavascriptException:
 					print("already following! like and close image")
 					if checkRecentLikeDate(userName):
-						browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+						likePost(browser)
+						# browser.execute_script("document.getElementsByClassName('wpO6b ')[1].click()")
+					
 
 						likeCounter(userName)
 					
@@ -606,7 +611,8 @@ def checkPostData(browser, flagPrint = True):
 		strPostDescription  = browser.find_element_by_xpath('.//div[2]/div[1]/ul/div/li/div/div/div[2]/span').text
 	except NoSuchElementException:
 		try:
-			strPostDescription  = browser.find_element_by_xpath('.//div[2]/div[1]/ul/ul[1]/div/li/div/div[1]/div[2]/span').text
+			strPostDescription  = browser.find_element_by_xpath('.//div[3]/div[1]/ul/div/li/div/div/div[2]/span').text
+
 		except Exception:
 			print("[Error] checkPostData | Cannot find post description")
 			postValid = False
@@ -628,7 +634,6 @@ def checkPostData(browser, flagPrint = True):
 
 def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 	SCROLL_HEIGHT = 800
-	username_code = 'sqdOP '
 	post_counter = 0
 	like_counter = 1
 
@@ -665,7 +670,7 @@ def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 			# get username from post and save it in file
 			# TODO add timestamp
 			# 	check username with checkRecentLikeDate() and change file where you save user
-			username = browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(username_code))
+			username = findUsername(browser)
 			like_counter += 1
 			print("{}. Post valid: {} for user: {}".format(like_counter, postValid, username))
 			
@@ -703,8 +708,21 @@ def scroll(browser, height = 350):
 
 def validUsername(username):
 
-	for badWord in invalid_names:
-			if re.search(badWord, username):
-				return False
+	if username != None:
+		for badWord in invalid_names:
+				if re.search(badWord, username):
+					return False
+	else:
+		print("[Error] (validUsername) could not find username")
+		return False
 
 	return True
+
+def likePost(browser):
+	browser.execute_script("document.getElementsByClassName('wpO6b ')[1].click()")
+
+def followUser(browser):
+	browser.execute_script("document.getElementsByClassName({})[0].click()".format(FOLLOWUSER_CODE))
+
+def findUsername(browser):
+	return browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(USERNAME_CODE))
