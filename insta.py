@@ -76,6 +76,9 @@ elif sys.argv[1] == "follow":
 
 elif sys.argv[1] == "likeAfterFollow":
 	likeHashtagPosts(browser, log, 45, int(sys.argv[2]), True)
+	
+elif sys.argv[1] == "followBae":
+	follow(browser, log, int(sys.argv[2]), bae=True)
 
 else:
 	print('wrong method name, try agane')

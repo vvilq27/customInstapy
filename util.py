@@ -18,6 +18,8 @@ excludes = ["dziecko", "hotel", "hotelspa", "spa", "zabiegi", "butik", "fashionb
 invalid_names = ["polk", "polsk", "polish", "polan", "official", "makeup", "meme", "zdrowie", "uroda", "styl", "butik", "caffe", "salon", "mama", "page",
 "fanpage", "photograph", "photo"]
 
+babeDictionary = ['girl', 'dziewczyna', 'hair']
+
 min_like_count = 20
 MAX_LIKE_COUNT = 355
 
@@ -488,27 +490,33 @@ def checkPostLikeCount(article, userName):
 	return result, like_count
 
 
-def follow(browser, logger, amount):
+# ZMIEN to na loopa z funkcja follow zeby return konczyl follow ale nie cale flow
+# porob funkcje wrzuc je do osobnego utila pod follow
+# zmien postCheckResult na slownik
+def follow(browser, logger, amount, bae=False, debug=False):
 	logger.info("Starting follow users: %d" % amount)
 	SLEEP_TIME = 30
 	SCROLL_HEIGHT = 370
 	SKIPPED_POSTS = 13
-	follow_counter = 0
+	followCounter = 0
 	post = 0
 
 	post_code = 'eLAPa'
 
 	buttons = None
-	userName = None
+
+	print('bae mode')
+	clickNextPost(browser)
 
 
 	browser.execute_script('document.elementFromPoint(230, 450).click()')
 
 # scroll top posts, disregard bitchez ;)
-	for i in range(SKIPPED_POSTS):
-		clickNextPost(browser)
+	if debug == True:
+		for i in range(SKIPPED_POSTS):
+			clickNextPost(browser)
 
-	while follow_counter < amount:
+	while followCounter < amount:
 		# scroll page
 		# if post % 3 == 0:
 		# 	scroll(browser, SCROLL_HEIGHT)
@@ -516,78 +524,19 @@ def follow(browser, logger, amount):
 		post += 1
 
 		try: 
-			# article = browser.execute_script("return document.getElementsByClassName('{}')[{}].click()".format(post_code, (post % 3) + 35))
-			# sleep(0.5)
 
-			try:
-				userName = findUsername(browser)
-			except JavascriptException as e:
-				print("chuja a nie username \n%s" % e)
-
-			userNameValid = validUsername(userName)
+			#name , nameValid, textValid, bae
+			postCheckResult = postCheck(browser);
 			
-			# check post likeHashtagPosts
-			postValid = checkPostData(browser, False)
-			
-			if postValid and userNameValid:
-				sleep(r(1,100)/100.0 + r(1,2))
+			if(bae == True):
+				if postCheckResult[3] != True:
+					print("not bae")
+					finalizeFollow(browser, postCheckResult)
 
-				# try to follow, if user already followed go next post
-				try:
-					followUser(browser)
-					# browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
-					sleep(r(1,3) + 1)
-					# like image
-					if checkRecentLikeDate(userName):
-						# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
-						likePost(browser)
+			# followAction(browser, logger, postCheckResult, followCounter)
 
-						likeCounter(userName)
-
-				except JavascriptException:
-					print("already following! like and close image")
-					if checkRecentLikeDate(userName):
-						likePost(browser)
-						# browser.execute_script("document.getElementsByClassName('wpO6b ')[1].click()")
-					
-
-						likeCounter(userName)
-					
-					sleep(r(1,7) + 1)
-					# exitPost(browser)
-
-					clickNextPost(browser)
-					continue
-
-				logger.info("{}. followed user: {}".format(follow_counter, userName))
-				follow_counter += 1
-
-				# get username from post and save it in file
-				with open("ifollow.txt", "a+") as users:
-					users.write("%s;%s\n" % (str(date.today()), str(userName)))
-
-				users.close()
-
-				sleep(r(30,50))
-
-				# close user window
-				# sleep(r(1,2) + 1)
-				
-				# exitPost(browser)
-				# sleep(r(1,2) + 1)
-
-				clickNextPost(browser)
-
-			else:
-				# post invalid, go next
-				print("post invalid for user: {}, username valid? {}".format(userName, userNameValid))
-					
-				# exitPost(browser)
-				clickNextPost(browser)
-
-				sleep(r(1,100)/10.0 + 1)
-
-				continue
+			if not postCheckResult[2] or not postCheckResult[1]:
+				finalizeFollow(browser, postCheckResult)
 
 		except NoSuchElementException as exception:
 			# print("[ERROR] NoSuchElementException: \r\n{}".format(exception))
@@ -602,10 +551,80 @@ def follow(browser, logger, amount):
 
 		sleep(3)
 
+def postCheck(browser):
+	userName = None
+
+	try:
+		userName = findUsername(browser)
+	except JavascriptException as e:
+		print("chuja a nie username \n%s" % e)
+
+	userNameValid = validUsername(userName)
+	
+	# check post likeHashtagPosts
+	postValid = checkPostData(browser, False)
+	print(str(postValid[0]) + ' ' + str(postValid[1]))
+
+	return [userName, userNameValid, postValid[0], postValid[1]]
+
+def followAction(browser, logger, postCheckResult, followCounter):
+	if postCheckResult[2] and postCheckResult[1]:
+		sleep(r(1,100)/100.0 + r(1,2))
+
+		# try to follow, if user already followed go next post
+
+		followUser(browser)
+
+		try:
+			
+			# browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
+			sleep(r(1,3) + 1)
+			# like image
+			if checkRecentLikeDate(postCheckResult[0]):
+				# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+				likePost(browser)
+
+				likeCounter(postCheckResult[0])
+
+		except JavascriptException:
+			print("already following! like and close image")
+			if checkRecentLikeDate(postCheckResult[0]):
+				likePost(browser)
+
+				likeCounter(postCheckResult[0])
+			
+			sleep(r(1,7) + 1)
+			# exitPost(browser)
+
+			clickNextPost(browser)
+			return
+
+		logger.info("{}. followed user: {}".format(followCounter, postCheckResult[0]))
+		followCounter += 1
+
+		# get username from post and save it in file
+		with open("ifollow.txt", "a+") as users:
+			users.write("%s;%s\n" % (str(date.today()), str(postCheckResult[0])))
+
+		users.close()
+
+		sleep(r(30,50))
+
+		clickNextPost(browser)
+
+def finalizeFollow(browser, postCheckResult):
+	# post invalid, go next
+	print("post invalid for user: {}, username valid? {}".format(postCheckResult[0], postCheckResult[1]))
+		
+	# exitPost(browser)
+	clickNextPost(browser)
+
+	sleep(r(1,100)/10.0 + 1)
 
 def checkPostData(browser, flagPrint = True):
 	postValid = True
 	strPostDescription = None
+	boolBabe = False
 
 	try:
 		strPostDescription  = browser.find_element_by_xpath('.//div[2]/div[1]/ul/div/li/div/div/div[2]/span').text
@@ -627,9 +646,17 @@ def checkPostData(browser, flagPrint = True):
 				if re.search(badWord, postWord):
 					print("checkPostData | found bad word: {}".format(postWord))
 					postValid = False
-					return False
+					return[postValid, boolBabe]
 
-	return postValid
+		for word in babeDictionary:
+			for postWord in listPostWords:
+				if re.search(word, postWord):
+					boolBabe = True
+			
+		if boolBabe:
+			print("Babe in da house")
+
+	return[postValid, boolBabe]
 
 
 def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
@@ -722,7 +749,10 @@ def likePost(browser):
 	browser.execute_script("document.getElementsByClassName('wpO6b ')[1].click()")
 
 def followUser(browser):
-	browser.execute_script("document.getElementsByClassName({})[0].click()".format(FOLLOWUSER_CODE))
+	try:
+		browser.execute_script("document.getElementsByClassName('sqdOP yWX7d    y3zKF     ')[0].click()")#.format(FOLLOWUSER_CODE))
+	except Exception as e:
+		print('[Error](followUser) {}'.format(e))
 
 def findUsername(browser):
-	return browser.execute_script("return document.getElementsByClassName('{}')[1].href".format(USERNAME_CODE))
+	return browser.execute_script("return document.getElementsByClassName('{}')[1].text".format(USERNAME_CODE))
