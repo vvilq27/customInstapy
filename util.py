@@ -509,12 +509,13 @@ def follow(browser, logger, amount, bae=False, debug=False):
 	clickNextPost(browser)
 
 
-	browser.execute_script('document.elementFromPoint(230, 450).click()')
+	# browser.execute_script('document.elementFromPoint(230, 450).click()')
 
 # scroll top posts, disregard bitchez ;)
 	if debug == True:
 		for i in range(SKIPPED_POSTS):
 			clickNextPost(browser)
+
 
 	while followCounter < amount:
 		# scroll page
@@ -526,17 +527,23 @@ def follow(browser, logger, amount, bae=False, debug=False):
 		try: 
 
 			#name , nameValid, textValid, bae
+			print(post)
 			postCheckResult = postCheck(browser);
 			
 			if(bae == True):
-				if postCheckResult[3] != True:
+				if postCheckResult['babe'] != True:
 					print("not bae")
 					finalizeFollow(browser, postCheckResult)
 
 			# followAction(browser, logger, postCheckResult, followCounter)
 
-			if not postCheckResult[2] or not postCheckResult[1]:
-				finalizeFollow(browser, postCheckResult)
+			if not postCheckResult['userNameValid'] or not postCheckResult['descriptionValid']: # are name and data ok?
+				# finalizeFollow(browser, postCheckResult)
+				print('next post')
+				clickNextPost(browser)
+			else:
+				followAction(browser, logger, postCheckResult['userName'], followCounter)
+				
 
 		except NoSuchElementException as exception:
 			# print("[ERROR] NoSuchElementException: \r\n{}".format(exception))
@@ -552,7 +559,9 @@ def follow(browser, logger, amount, bae=False, debug=False):
 		sleep(3)
 
 def postCheck(browser):
+	# fix log follow counter
 	userName = None
+	result = dict()
 
 	try:
 		userName = findUsername(browser)
@@ -563,54 +572,60 @@ def postCheck(browser):
 	
 	# check post likeHashtagPosts
 	postValid = checkPostData(browser, False)
-	print(str(postValid[0]) + ' ' + str(postValid[1]))
+	print('post valid: ' + str(postValid['descriptionValid']) + ' bae: ' + str(postValid['babe']))
 
-	return [userName, userNameValid, postValid[0], postValid[1]]
+	result['babe'] = postValid['babe']
+	result['descriptionValid'] = postValid['descriptionValid']
+	result['userName'] = userName
+	result['userNameValid'] =  validUsername(userName)
 
-def followAction(browser, logger, postCheckResult, followCounter):
-	if postCheckResult[2] and postCheckResult[1]:
-		sleep(r(1,100)/100.0 + r(1,2))
+	# return [userName, userNameValid, postValid['descriptionValid'], postValid[]]
+	return result
 
-		# try to follow, if user already followed go next post
+def followAction(browser, logger, userName, followCounter):
+	sleep(r(1,100)/100.0 + r(1,2))
 
-		followUser(browser)
+	# try to follow, if user already followed go next post
+	print('follow user')
 
-		try:
-			
-			# browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
-			sleep(r(1,3) + 1)
-			# like image
-			if checkRecentLikeDate(postCheckResult[0]):
-				# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
-				likePost(browser)
+	followUser(browser)
 
-				likeCounter(postCheckResult[0])
+	try:
+		
+		# browser.execute_script("document.getElementsByClassName('oW_lN sqdOP yWX7d    y3zKF     ')[0].click()")
+		sleep(r(1,3) + 1)
+		# like image
+		if checkRecentLikeDate(userName):
+			# browser.execute_script("document.getElementsByClassName('wpO6b ')[0].click()")
+			likePost(browser)
 
-		except JavascriptException:
-			print("already following! like and close image")
-			if checkRecentLikeDate(postCheckResult[0]):
-				likePost(browser)
+			likeCounter(userName)
 
-				likeCounter(postCheckResult[0])
-			
-			sleep(r(1,7) + 1)
-			# exitPost(browser)
+	except JavascriptException:
+		print("already following! like and close image")
+		if checkRecentLikeDate(userName):
+			likePost(browser)
 
-			clickNextPost(browser)
-			return
-
-		logger.info("{}. followed user: {}".format(followCounter, postCheckResult[0]))
-		followCounter += 1
-
-		# get username from post and save it in file
-		with open("ifollow.txt", "a+") as users:
-			users.write("%s;%s\n" % (str(date.today()), str(postCheckResult[0])))
-
-		users.close()
-
-		sleep(r(30,50))
+			likeCounter(userName)
+		
+		# sleep(r(1,7) + 1)
+		# exitPost(browser)
 
 		clickNextPost(browser)
+		return
+
+	logger.info("{}. followed user: {}".format(followCounter, userName))
+	followCounter += 1
+
+	# get username from post and save it in file
+	with open("ifollow.txt", "a+") as users:
+		users.write("%s;%s\n" % (str(date.today()), str(userName)))
+
+	users.close()
+
+	sleep(r(5,10))
+
+	clickNextPost(browser)
 
 def finalizeFollow(browser, postCheckResult):
 	# post invalid, go next
@@ -624,7 +639,8 @@ def finalizeFollow(browser, postCheckResult):
 def checkPostData(browser, flagPrint = True):
 	postValid = True
 	strPostDescription = None
-	boolBabe = False
+	boolBabe = False #none
+	result = dict()
 
 	try:
 		strPostDescription  = browser.find_element_by_xpath('.//div[2]/div[1]/ul/div/li/div/div/div[2]/span').text
@@ -646,18 +662,26 @@ def checkPostData(browser, flagPrint = True):
 				if re.search(badWord, postWord):
 					print("checkPostData | found bad word: {}".format(postWord))
 					postValid = False
-					return[postValid, boolBabe]
+
+					result['babe'] = boolBabe
+					result['descriptionValid'] = postValid
+					return result
 
 		for word in babeDictionary:
 			for postWord in listPostWords:
 				if re.search(word, postWord):
 					boolBabe = True
+					break
 			
 		if boolBabe:
 			print("Babe in da house")
 
-	return[postValid, boolBabe]
+	result['babe'] = boolBabe
+	result['descriptionValid'] = postValid
 
+	print(str(postValid) + ' ' + str(boolBabe) )
+
+	return result
 
 def likeHashtagPosts(browser, log, like_amount, continueLiking=False):
 	SCROLL_HEIGHT = 800
@@ -728,7 +752,8 @@ def clickNextPostRandomize(browser, repetitions):
 
 
 def clickNextPost(browser):
-		browser.execute_script('document.elementFromPoint(1050, 460).click()')
+		browser.execute_script('document.elementFromPoint(1017, 493).click()')
+		# document.getElementsByClassName(' _65Bje')[0].offsetLeft
 
 def scroll(browser, height = 350):
 	browser.execute_script("window.scrollBy(0,%s)" % str(height))
