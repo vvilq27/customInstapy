@@ -10,7 +10,8 @@ from util import follow
 from util import likeHashtagPosts
 import sys
 
-from logger_util import get_logger
+# from logger_util import get_logger
+import logging
 
 from datetime import date
 from time import sleep
@@ -35,19 +36,23 @@ button_exit_class = '                   Igw0E     IwRSH      eGOV_         _4EzT
 
 chrome_options = Options()
 chrome_options.add_experimental_option("debuggerAddress", "localhost:9014")
-chrome_options.add_argument('headless')
+# chrome_options.add_argument('headless')
 #Change chrome driver path accordingly
-chrome_driver = "C:/Users/aro/Documents/chromedriver85/chromedriver.exe"
+chrome_driver = "C:/Users/vvilq/chromedriver.exe"
 browser = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
 
 # browser.get("https://www.instagram.com/")
 
-log = get_logger()
+# log = get_logger()
+log = logging
+
+# browser.get("onet.pl")
 
 # browser.execute_script("window.scrollBy(0, {})".format(1000))
 
 # TODO 
 # put all method name strings in array and display it in else
+
 if sys.argv[1] == "like":
 	likePosts(browser, log, int(sys.argv[2]))
 

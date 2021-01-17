@@ -755,6 +755,9 @@ def clickNextPost(browser):
 		browser.execute_script('document.elementFromPoint(1017, 493).click()')
 		# document.getElementsByClassName(' _65Bje')[0].offsetLeft
 
+def clickFirstPost(browser):
+	browser.execute_script('document.elementFromPoint(400, 150).click()')
+
 def scroll(browser, height = 350):
 	browser.execute_script("window.scrollBy(0,%s)" % str(height))
 
