@@ -31,7 +31,7 @@ button_exit_class = '                   Igw0E     IwRSH      eGOV_         _4EzT
 
 
 # def init():
-# command = 'chrome.exe -remote-debugging-port=9014 --user-data-dir="C:/Users/aro/Documents/ChromeProfile"'
+# command = 'chrome.exe -remote-debugging-port=9014 --user-data-dir="C:/Users/vvilq/Documents/ChromeProfile"'
 # proc=Popen(command)
 
 chrome_options = Options()
@@ -55,6 +55,7 @@ log = logging
 
 if sys.argv[1] == "like":
 	likePosts(browser, log, int(sys.argv[2]))
+	# browser.execute_script('document.elementFromPoint(300, 500).click()')
 
 elif sys.argv[1] == "followers":
 	getFollowers(browser)

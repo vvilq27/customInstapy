@@ -260,6 +260,15 @@ def likePosts(browser, logger, amount):
 	prevUserName = ''
 	postValid = None
 
+	clickFirstPost(browser)
+	clickNextPost(browser)
+	sleep(1)
+	clickNextPost(browser)
+	sleep(2)
+	clickNextPost(browser)
+	sleep(1)
+	clickNextPost(browser)
+
 	while amount > int_post_liked:
 
 		while userName == prevUserName:
@@ -752,11 +761,11 @@ def clickNextPostRandomize(browser, repetitions):
 
 
 def clickNextPost(browser):
-		browser.execute_script('document.elementFromPoint(1017, 493).click()')
+		browser.execute_script('document.elementFromPoint(1150, 250).click()')
 		# document.getElementsByClassName(' _65Bje')[0].offsetLeft
 
 def clickFirstPost(browser):
-	browser.execute_script('document.elementFromPoint(400, 150).click()')
+	browser.execute_script('document.elementFromPoint(300, 500).click()')
 
 def scroll(browser, height = 350):
 	browser.execute_script("window.scrollBy(0,%s)" % str(height))
