@@ -254,52 +254,60 @@ def likePosts(browser, logger, amount):
 	scrollHeight = 220
 	int_post_liked = 0
 	scrollTime = 0.4
+
+	postTextXPath = './/div[3]/div[1]/ul/div/li/div/div/div[2]/span'
+	userNameXPath = './/header/div[2]/div[1]/div[1]/span/a'
 	
 
 	userName = ''
 	prevUserName = ''
-	postValid = None
 
 	clickFirstPost(browser)
-	clickNextPost(browser)
-	sleep(1)
-	clickNextPost(browser)
-	sleep(2)
-	clickNextPost(browser)
-	sleep(1)
-	clickNextPost(browser)
+
+	for i in range(8):
+		clickNextPost(browser)
+		sleep(0.5)
 
 	while amount > int_post_liked:
+		postValid = None
 
-		while userName == prevUserName:
-			scroll(browser, scrollHeight)
+		# while userName == prevUserName:
+		# 	scroll(browser, scrollHeight)
 
-			article = browser.execute_script("return document.getElementsByTagName('article')[4]")
+		sleep(5)
 
-			try:
-				# userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/h2/a').text
-				userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/div/a').text
-			except NoSuchElementException:
-				# the post is a hastag
-				try:
-					userName = article.find_element_by_xpath(USERNAME_PATH).text
-				except NoSuchElementException:
-					try:
-						hashtag = article.find_element_by_xpath(HASHTAG_PATH).text
-						logger.info("Found hashtag #{}, continue ==>".format(hashtag))
-						scroll(browser, 700)
-						continue
-					except:
-						logger.info("Failed to get username, continue ==>")
-						continue
+		article = browser.execute_script("return document.getElementsByTagName('article')[1]")
+
+		try:
+			# userName = article.find_element_by_xpath('.//header/div[2]/div[1]/div/h2/a').text
+			userName = article.find_element_by_xpath(userNameXPath).text
+			print(userName)
+		except Exception:
+			clickNextPost(browser)
+
+			continue
+
+			# the post is a hastag
+			# try:
+			# 	userName = article.find_element_by_xpath(USERNAME_PATH).text
+			# except NoSuchElementException:
+			# 	try:
+			# 		hashtag = article.find_element_by_xpath(HASHTAG_PATH).text
+			# 		logger.info("Found hashtag #{}, continue ==>".format(hashtag))
+			# 		clickNextPost(browser)
+			# 		continue
+			# 	except:
+			# 		logger.info("Failed to get username, continue ==>")
+			# 		continue
 
 
-			sleep(scrollTime)
+		sleep(scrollTime)
 
 		prevUserName = userName
 
 		try:
-			postText = article.find_element_by_xpath('.//div[2]/div[1]/div/div/span/span[1]').text
+			postText = article.find_element_by_xpath(postTextXPath).text
+			# print(postText)
 		except NoSuchElementException:
 			print('[Warning] Cant find postText')
 			postValid = True
@@ -309,38 +317,41 @@ def likePosts(browser, logger, amount):
 
 		if not postValid:
 			print("[invalid post text], next post")
+			sleep(4)
+			clickNextPost(browser)
 			continue
 
-		flagRecentlyLikedPost = checkRecentLikeDate(userName) # last like was..
-		flagPostLikeCount, likeCount = checkPostLikeCount(article, userName)
+		# flagRecentlyLikedPost = checkRecentLikeDate(userName) # last like was..
+		# flagPostLikeCount, likeCount = checkPostLikeCount(article, userName)
 
-		if  flagRecentlyLikedPost and flagPostLikeCount:
-			try:
-				buttonLike = article.find_elements_by_class_name(LIKE_CODE)[LIKE_BUTTON_INDEX]
+		# if  flagRecentlyLikedPost and flagPostLikeCount:
+		try:
+			buttonLike = article.find_elements_by_class_name(LIKE_CODE)[LIKE_BUTTON_INDEX]
 
-				# send keys is workaround for click() function not working here for some reason
-				buttonLike.send_keys("\n")
-				int_post_liked +=  1
+			# send keys is workaround for click() function not working here for some reason
+			buttonLike.send_keys("\n")
+			int_post_liked +=  1
 
-				logger.info('liking image: {}. {}'.format(int_post_liked, userName))
-				
-				sleep(random.randint(100,300)/100.0)
-			except NoSuchElementException:
-				print("Post already liked, user: {}".format(userName))
-		else:
-			if not flagRecentlyLikedPost:
-				print("(%s)User was liked within last 3 days, next post" % userName)
+			logger.info('liking image: {}. {}'.format(int_post_liked, userName))
+			
+			sleep(random.randint(100,300)/100.0)
+		except NoSuchElementException:
+			print("Post already liked, user: {}".format(userName))
+		# else:
+		# 	if not flagRecentlyLikedPost:
+		# 		print("(%s)User was liked within last 3 days, next post" % userName)
 
-			elif not flagPostLikeCount:
-				print('[INFO] likePosts() | ({}) Post has too many likes ({}) or cant get likes count'.format(userName, likeCount))
+		# 	elif not flagPostLikeCount:
+		# 		print('[INFO] likePosts() | ({}) Post has too many likes ({}) or cant get likes count'.format(userName, likeCount))
 
 			continue
 		
-		likeCounter(userName)
+		# likeCounter(userName)
 
-		sleep(3)
+		sleep(0.5)
 
-		browser.execute_script("window.scrollBy(0, {})".format(300))
+		clickNextPost(browser)
+		# browser.execute_script("window.scrollBy(0, {})".format(300))
 
 
 def checkFollowedUserPost(postText):
@@ -355,6 +366,7 @@ def checkFollowedUserPost(postText):
 				postValid = False
 				break
 
+	print('post valid: {}', postValid)
 	return postValid
 
 
@@ -760,8 +772,17 @@ def clickNextPostRandomize(browser, repetitions):
 		sleep(0.75)
 
 
+# function printMousePos(event) {
+#   document.body.textContent =
+#     "clientX: " + event.clientX +
+#     " - clientY: " + event.clientY;
+# }
+
+# document.addEventListener("click", printMousePos);
+
 def clickNextPost(browser):
-		browser.execute_script('document.elementFromPoint(1150, 250).click()')
+		# browser.execute_script('document.elementFromPoint(1150, 260).click()')
+		browser.execute_script('document.elementFromPoint(1170, 350).click()')
 		# document.getElementsByClassName(' _65Bje')[0].offsetLeft
 
 def clickFirstPost(browser):
